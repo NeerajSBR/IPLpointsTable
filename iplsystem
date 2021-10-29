@@ -1,0 +1,303 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<math.h>
+#include<time.h>
+#include<unistd.h>
+void typewriter(const char* letter, int rate)
+{
+for (int i = 0; letter[i] != '\0'; i++)
+{
+printf("%c", letter[i]);
+ fflush(stdout);
+ usleep(1000 * rate);
+}
+}
+int randscore(int lower, int upper)
+{
+ int score = (rand() % (upper - lower + 1)) + lower;
+ return score;
+}
+typedef struct node
+{
+char name[10];
+int teamid;
+float nrr;
+int w,l,d,p;
+int mplayed;
+int batsman[10];
+int ballsplayed[10];
+}team;
+team t[4]={0};
+//displays the sorted points table
+void pointsdisplay()
+{
+ team temp;
+ printf("\nPoints table:\n\n");
+printf("|Team name| W|L|D |Points| |Nrr|");
+printf("\n____________________________________________\n\n");
+for(int h=0;h<1;h++)
+{
+ for(int j=0;j<4;j++)
+ {
+ for(int k=j+1;k<4;k++)
+ {
+ if(t[j].p<t[j+1].p)
+ {
+ temp=t[j];
+ t[j]=t[j+1];
+ t[j+1]=temp;
+ }
+}
+ }
+ }
+ for(int i=0;i<4;i++)
+ {
+ printf(" %s %d|%d|%d %d
+%.2f\n",t[i].name,t[i].w,t[i].l,t[i].d,t[i].p,t[i].nrr);
+ }
+}
+//displays the team names for match making
+void displayteams()
+{
+printf("\n Teams\n\n");
+printf("Teamid Team name\n");
+ for(int i=0;i<4;i++)
+ {
+ printf(" %d\t %s\n\n",t[i].teamid,t[i].name);
+ }
+}
+float netrun(int runs1,int balls1,int runs2,int balls2)
+{
+ float nrr1,nrr2;
+ nrr1=(float)runs1/balls1;
+ nrr2=(float)runs2/balls2;
+ return (nrr1-nrr2);
+}
+//made into global variables so that it can be visible outside the function
+int s1,s2,balls1,balls2,wick1,wick2;
+float nrr1,nrr2;
+int t1,t2;
+int q[2];
+void batscores()
+{
+q[0]=randscore(0,50);
+q[1]=randscore(9,45);
+}
+void pmatch()
+{
+ displayteams();
+ reenter:
+ printf("Enter the teams which play against each other!.\nplease Enter
+teamid:\n\n");
+ scanf("%d%d",&t1,&t2);
+ if(t1==t2 || t1>4 ||t2>4)
+ {
+ printf("\nPlease enter correct values!\nTeam id is between 1 and 4.
+\n\n");
+ goto reenter;
+ }
+//To generate Random score,balls,and wickets
+wick1=randscore(2,9);
+int totalscr1=0,totalballs1=0;
+for(int i=0;i<wick1;i++)
+{
+batscores();
+totalscr1+=q[0];
+totalballs1+=q[1];
+ t[t1-1].batsman[i]=q[0];
+ t[t1-1].ballsplayed[i]=q[1];
+if (totalballs1>120)
+{
+ int diffball = totalballs1-120;
+ t[t1-1].ballsplayed[i]=q[1]-diffball;
+ wick1=i-1;
+ break;
+}
+else if(i==wick1-1)
+{
+t[t1-1].batsman[i]=q[0];
+ int diffball =120-totalballs1;
+t[t1-1].ballsplayed[i]=q[1]+diffball;
+}
+}
+ wick2=randscore(2,9);
+ int totalscr2=0,totalballs2=0;
+for(int i=0;i<wick2;i++)
+{
+batscores();
+totalscr2+=q[0];
+totalballs2+=q[1];
+ t[t2-1].batsman[i]=q[0];
+ t[t2-1].ballsplayed[i]=q[1];
+if (totalballs2>120)
+{
+ int diffball = totalballs2-120;
+ t[t2-1].ballsplayed[i]=q[1]-diffball;
+ wick2=i-1;
+ break;
+}
+ else if(totalscr2>totalscr1)
+ {
+ int diffbat = totalscr2-totalscr1;
+ t[t2-1].batsman[i]=q[0]-diffbat+1;
+ t[t2-1].ballsplayed[i]=q[1];
+ break;
+ }
+}
+s1=totalscr1;
+s2=totalscr2;
+balls1=totalballs1;
+balls2=totalballs2;
+printf("\n0%d.%s vs 0%d.%s\n",t[t1-1].teamid,t[t1-1].name,t[t2-1].teamid,t[t2-
+1].name);
+int diff1;
+ //when chasing team loses!
+if(s1>s2)
+{
+diff1=s1-s2;
+typewriter("\nFirst INNINGS:\n",60);
+printf("\n%s score/wickets=%d/%d",t[t1-1].name,s1,wick1);
+typewriter("\n\nSecond INNINGS:\n",60);
+printf("\n%s score/wickets=%d/%d",t[t2-1].name,s2,wick2);
+printf("\n\n%s won by %d runs\n",t[t1-1].name,diff1);
+t[t1-1].w+=1;
+t[t2-1].l+=1;
+t[t1-1].p+=2;
+ nrr1=netrun(s1,balls1,s2,balls2);
+ nrr2=netrun(s2,balls2,s1,balls1);
+ t[t1-1].nrr+=nrr1;
+ t[t2-1].nrr+=nrr2;
+ printf("\n%s nrr=%.2f\n%s nrr=%.2f\n",t[t1-
+1].name,netrun(s1,balls1,s2,balls2),t[t2-1].name,netrun(s2,balls2,s1,balls1));
+}
+//when the chasing team wins the game
+else if(s2>s1)
+{
+ s2=s1+randscore(1,6);
+typewriter("\nFirst INNINGS:\n",60);
+printf("\n%s score/wickets=%d/%d",t[t1-1].name,s1,wick1);
+int l=wick1;
+typewriter("\n\nSecond INNINGS:\n",60);
+printf("\n%s score/wickets=%d/%d",t[t2-1].name,s2,wick2);
+printf("\n\n%s won by %d wickets\n",t[t2-1].name,10-wick2);
+t[t2-1].w+=1;
+t[t1-1].l+=1;
+t[t2-1].p+=2;
+ nrr1=netrun(s1,balls1,s2,balls2);
+ nrr2=netrun(s2,balls2,s1,balls1);
+ t[t1-1].nrr+=nrr1;
+ t[t2-1].nrr+=nrr2;
+ printf("\n%s nrr=%.2f \n%s nrr=%.2f\n",t[t1-
+1].name,netrun(s1,balls1,s2,balls2),t[t2-1].name,netrun(s2,balls2,s1,balls1));
+}
+ //when the match is a draw!
+else if(s1==s2)
+{
+printf("Draw!\n");
+t[t2-1].d+=1;
+t[t1-1].d+=1;
+t[t1-1].p+=1;
+t[t2-1].p+=1;
+}
+t[t1-1].mplayed+=1;
+t[t2-1].mplayed+=1;
+}
+//displays match stats of the previous match
+void matchstats()
+{
+ printf("\nPrevious Match Stats\n");
+ int diff1;
+if(s1>s2)
+{
+diff1=s1-s2;
+printf("\n%s score/wickets=%d/%d",t[t1-1].name,s1,wick1);
+for(int i=0;i<10;i++)
+{
+printf("\nBatsman %d scored %d runs in %d balls ",i,t[t1-1].batsman[i],t[t1-
+1].ballsplayed[i]);
+}
+printf("\n\n%s score/wickets=%d/%d",t[t2-1].name,s2,wick2);
+ for(int i=0;i<10;i++)
+{
+printf("\nBatsman %d scored %d runs in %d balls ",i,t[t2-1].batsman[i],t[t2-
+1].ballsplayed[i]);
+}
+printf("\n\n%s won by %d runs\n",t[t1-1].name,diff1);
+ printf("\n%s nrr=%.2f",t[t1-1].name,nrr1);
+ printf("\n%s nrr=%.2f",t[t2-1].name,nrr2);
+}
+else if(s2>s1)
+{
+printf("\n%s score/wickets=%d/%d",t[t1-1].name,s1,wick1);
+for(int i=0;i<10;i++)
+{
+printf("\nBatsman %d scored %d runs in %d balls ",i,t[t1-1].batsman[i],t[t1-
+1].ballsplayed[i]);
+}
+printf("\n\n%s score/wickets=%d/%d",t[t2-1].name,s2,wick2);
+for(int i=0;i<10;i++)
+{
+printf("\nBatsman %d scored %d runs in %d balls ",i,t[t2-1].batsman[i],t[t2-
+1].ballsplayed[i]);
+}
+printf("\n\n%s won by %d wickets\n",t[t2-1].name,10-wick2);
+ printf("\n%s nrr=%.2f",t[t1-1].name,nrr1);
+ printf("\n%s nrr=%.2f",t[t2-1].name,nrr2);
+}
+else if(s1==s2)
+{
+printf("Match was a Draw!\n");
+printf("\n%s score/wickets=%d/%d",t[t1-1].name,s1,wick1);
+ printf("\n%s score/wickets=%d/%d",t[t2-1].name,s2,wick2);
+}
+}
+int main()
+{
+ int choice;
+srand(time(0));
+strcpy(t[0].name,"RCB");
+t[0].teamid=1;
+strcpy(t[1].name,"CSK");
+t[1].teamid=2;
+strcpy(t[2].name,"KKR");
+t[2].teamid=3;
+strcpy(t[3].name,"SRH");
+t[3].teamid=4;
+ //FINAL OUTPUT//
+ printf("\n \n Welcome To IPL's Points Table");
+while(1)
+{
+ reenter:
+ printf("\t\n\n ~~~~~~MAIN MENU~~~~~~");
+printf("\n_________________________________\n");
+printf("_________________________________\n");
+printf("\n 1.Play a match ");
+printf("\n 2.Match stats of previous game");
+printf("\n 3.Display Points table");
+printf("\n 4.Exit the program");
+printf("\n_________________________________\n");
+printf("_________________________________\n");
+ printf("\n Enter your choice:");
+scanf("%d",&choice);
+switch(choice)
+{
+case 1:
+pmatch();
+ break;
+case 2:
+matchstats();
+break;
+case 3:
+ pointsdisplay();
+break;
+case 4:
+typewriter("\nTHANK YOU FOR USING OUR POINTS TABLE.",35);
+exit(1);
+break;
+default:printf("\nINVALID INPUT");
+ break;
+}
+}
+return 0;
+}
